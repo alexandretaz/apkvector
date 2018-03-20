@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">Vipcard</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_login">Código do Cliente</string>
+    <string name="prompt_password">Senha (Opcional)</string>
+    <string name="action_sign_in">Login</string>
+    <string name="action_sign_in_short">LOgin</string>
+    <string name="error_invalid_code">O código é inválido</string>
+    <string name="error_invalid_password">A senha é muito curta</string>
+    <string name="error_incorrect_password">A senha está incorreta</string>
+    <string name="error_field_required">Este campo é obrigatório</string>
+    <string name="title_activity_main">Vipcard - Grupo Vector</string>
+    <string name="title_home">Página Inicial</string>
+    <string name="title_dashboard">Dashbard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="title_activity_help">Ajuda</string>
+    <string name="action_settings">Configurações</string>
+</resources>
