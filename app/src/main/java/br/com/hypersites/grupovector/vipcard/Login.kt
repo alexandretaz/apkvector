@@ -27,10 +27,12 @@ import kotlinx.android.synthetic.main.activity_login.*
 import android.content.Context.TELEPHONY_SERVICE
 import android.content.Intent
 import android.telephony.TelephonyManager
+import com.github.kittinunf.fuel.Fuel
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.noButton
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
+import org.json.JSONObject
 
 
 /**
@@ -212,7 +214,12 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
 
 
             try {
-                // Simulate network access.
+                val json = JSONObject()
+
+                Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/authenticate")
+                        .body(json.toString())
+                        .responseString()
+
                 Thread.sleep(2000)
                 return true
             } catch (e: InterruptedException) {
