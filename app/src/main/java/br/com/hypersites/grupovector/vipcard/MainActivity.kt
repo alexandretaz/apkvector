@@ -1,5 +1,6 @@
 package br.com.hypersites.grupovector.vipcard
 
+import android.content.Intent
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.support.v7.app.AppCompatActivity
@@ -14,8 +15,8 @@ class MainActivity : AppCompatActivity() {
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_dashboard -> {
-                message.setText(R.string.title_dashboard)
-                return@OnNavigationItemSelectedListener true
+               intent = Intent(this, HelpActivity::class.java)
+                startActivity(intent)
             }
         }
         false

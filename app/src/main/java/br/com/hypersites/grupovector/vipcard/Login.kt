@@ -25,8 +25,12 @@ import android.Manifest.permission.READ_CONTACTS
 
 import kotlinx.android.synthetic.main.activity_login.*
 import android.content.Context.TELEPHONY_SERVICE
+import android.content.Intent
 import android.telephony.TelephonyManager
-
+import org.jetbrains.anko.alert
+import org.jetbrains.anko.noButton
+import org.jetbrains.anko.toast
+import org.jetbrains.anko.yesButton
 
 
 /**
@@ -99,6 +103,7 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true)
+
             mAuthTask = UserLoginTask(loginStr, passwordStr)
             mAuthTask!!.execute(null as Void?)
         }
@@ -112,6 +117,11 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
     private fun isPasswordValid(password: String): Boolean {
         //TODO: Replace this with your own logic
         return password.length > 4
+    }
+
+    fun enterSystem() {
+        val intent = Intent(this, MainActivity::class.java)
+        startActivity(intent)
     }
 
     /**
@@ -196,23 +206,20 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
             val brand = Build.BRAND
             val model = Build.MODEL
             val id = Build.ID
+            val tm: TelephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
+            //val imei = tm.imei
+
 
 
             try {
                 // Simulate network access.
                 Thread.sleep(2000)
+                return true
             } catch (e: InterruptedException) {
                 return false
             }
 
-            return DUMMY_CREDENTIALS
-                    .map { it.split(":") }
-                    .firstOrNull { it[0] == mEmail }
-                    ?.let {
-                        // Account exists, return true if the password matches.
-                        it[1] == mPassword
-                    }
-                    ?: true
+            return  true
         }
 
         override fun onPostExecute(success: Boolean?) {
@@ -220,7 +227,7 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
             showProgress(false)
 
             if (success!!) {
-                finish()
+                enterSystem()
             } else {
                 password.error = getString(R.string.error_incorrect_password)
                 password.requestFocus()
@@ -234,11 +241,6 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
     }
 
     companion object {
-
-        /**
-         * Id to identity READ_CONTACTS permission request.
-         */
-        private val REQUEST_READ_CONTACTS = 0
 
         /**
          * A dummy authentication store containing known user names and passwords.
