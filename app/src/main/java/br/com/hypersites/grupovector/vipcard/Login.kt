@@ -209,16 +209,22 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
             val model = Build.MODEL
             val id = Build.ID
             val tm: TelephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
-            //val imei = tm.imei
+            val imei = tm.imei
 
 
 
             try {
                 val json = JSONObject()
-
-                Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/authenticate")
+                json.put("brand",brand)
+                json.put("model",model)
+                json.put("device_id",id)
+                json.put("imei",imei)
+                val (request, resquestBody, result) = Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/authenticate")
                         .body(json.toString())
                         .responseString()
+                result.fold({ /*success*/ },
+                        { /*failure*/ }
+                )
 
                 Thread.sleep(2000)
                 return true
