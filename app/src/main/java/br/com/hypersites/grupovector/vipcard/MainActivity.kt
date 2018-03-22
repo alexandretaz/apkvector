@@ -1,7 +1,6 @@
 package br.com.hypersites.grupovector.vipcard
 
 import android.content.Intent
-import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.support.v7.app.AppCompatActivity
@@ -25,9 +24,10 @@ class MainActivity : AppCompatActivity() {
         false
     }
 
-    override fun onCreate(savedInstanceState: Bundle?, db:SqliteHelper) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val _connection = SqliteHelper.getInstance(applicationContext)
 
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
     }

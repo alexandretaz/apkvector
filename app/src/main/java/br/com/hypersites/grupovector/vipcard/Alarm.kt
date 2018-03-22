@@ -27,8 +27,9 @@ class Alarm: Service() {
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         val postParams =  JSONObject()
-        postParams.put("token",StoredProfile.getToken())
-        val (request, body,response)=Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/alarm/create").body().response()
+        val token = "aaaa"
+        postParams.put("token",token)
+        val (request, body,response)=Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/alarm/create").body(postParams.toString()).response()
         return Service.START_STICKY
     }
 

@@ -27,6 +27,7 @@ import kotlinx.android.synthetic.main.activity_login.*
 import android.content.Context.TELEPHONY_SERVICE
 import android.content.Intent
 import android.telephony.TelephonyManager
+import android.util.Log
 import com.github.kittinunf.fuel.Fuel
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.noButton
@@ -91,7 +92,7 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
         }
 
         // Check for a valid email address.
-        if (TextUtils.isEmpty(loginStr)) {
+        if (TextUtils.isEmpty(loginStr) && !isLoginValid(loginStr)) {
             login.error = getString(R.string.error_field_required)
             focusView = login
             cancel = true
@@ -209,7 +210,7 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
             val model = Build.MODEL
             val id = Build.ID
             val tm: TelephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
-            val imei = tm.imei
+            //val imei = tm.imei
 
 
 
@@ -218,17 +219,16 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
                 json.put("brand",brand)
                 json.put("model",model)
                 json.put("device_id",id)
-                json.put("imei",imei)
-                val (request, resquestBody, result) = Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/authenticate")
+                json.put("imei","")
+                val (request, resquestBody, result) = Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/auth")
                         .body(json.toString())
                         .responseString()
-                result.fold({ /*success*/ },
-                        { /*failure*/ }
-                )
+                result.fold({ Log.i("Teste Login", result.toString())},{ Log.i("Falha Login", resquestBody.toString())})
 
                 Thread.sleep(2000)
                 return true
             } catch (e: InterruptedException) {
+
                 return false
             }
 
