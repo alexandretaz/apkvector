@@ -9,7 +9,7 @@
     <string name="action_sign_in_short">LOgin</string>
     <string name="error_invalid_code">O código é inválido</string>
     <string name="error_invalid_password">A senha é muito curta</string>
-    <string name="error_incorrect_password">A senha está incorreta</string>
+    <string name="error_incorrect_password">Verifique sua senha</string>
     <string name="error_field_required">Este campo é obrigatório</string>
     <string name="title_activity_main">Vipcard - Grupo Vector</string>
     <string name="title_home">Página Inicial</string>

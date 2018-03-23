@@ -38,6 +38,7 @@
                 android:value="br.com.hypersites.grupovector.vipcard.MainActivity" />
         </activity>
         <service android:name=".Alarm" ></service>
+        <service android:name=".Help" ></service>
 
     </application>
 

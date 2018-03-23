@@ -22,18 +22,21 @@ import android.widget.TextView
 
 import java.util.ArrayList
 import android.Manifest.permission.READ_CONTACTS
+import android.Manifest.permission.READ_PHONE_STATE
 
 import kotlinx.android.synthetic.main.activity_login.*
 import android.content.Context.TELEPHONY_SERVICE
 import android.content.Intent
 import android.telephony.TelephonyManager
 import android.util.Log
+import com.beust.klaxon.Klaxon
 import com.github.kittinunf.fuel.Fuel
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.noButton
 import org.jetbrains.anko.toast
 import org.jetbrains.anko.yesButton
 import org.json.JSONObject
+import org.json.JSONStringer
 
 
 /**
@@ -47,6 +50,18 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.i("Criando Login","Passo 1 da Atividade")
+        val connect = SqliteHelper.getInstance(applicationContext)
+        Log.i("Criando SQLitw","Passo 2 da Atividade")
+        connect.createDBIfNeeded()
+        Log.i("Criando Db","Passo 3 da Atividade")
+
+        Log.i("Pegando os usuários","Passo 1 da Atividade")
+        val hasUser:Int = connect.getAllUsers()
+        if(hasUser==1) {
+            enterSystem()
+        }
+        Log.i("Pegando os usuários","Passo 1 da Atividade")
         setContentView(R.layout.activity_login)
         // Set up the login form.
         password.setOnEditorActionListener(TextView.OnEditorActionListener { _, id, _ ->
@@ -203,36 +218,49 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    inner class UserLoginTask internal constructor(private val mEmail: String, private val mPassword: String) : AsyncTask<Void, Void, Boolean>() {
+    inner class UserLoginTask internal constructor(private val mLogin: String, private val mPassword: String) : AsyncTask<Void, Void, Boolean>() {
 
         override fun doInBackground(vararg params: Void): Boolean? {
             val brand = Build.BRAND
             val model = Build.MODEL
             val id = Build.ID
+            val code = mLogin
+            val cpf = mPassword
+            var imei = "undefined"
             val tm: TelephonyManager = getSystemService(TELEPHONY_SERVICE) as TelephonyManager
-            //val imei = tm.imei
 
 
 
             try {
+                Log.i("Predispath",cpf)
                 val json = JSONObject()
+                var resultHttp = false
                 json.put("brand",brand)
+                json.put("code", code)
+                json.put("cpf", cpf)
                 json.put("model",model)
                 json.put("device_id",id)
-                json.put("imei","")
+                json.put("imei",id)
                 val (request, resquestBody, result) = Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/auth")
                         .body(json.toString())
                         .responseString()
-                result.fold({ Log.i("Teste Login", result.toString())},{ Log.i("Falha Login", resquestBody.toString())})
+                result.fold({
+                    Log.i("Teste Login", result.toString())
+                    resultHttp = true
+                    val token = result.toString()
+                    val connect = SqliteHelper.getInstance(applicationContext)
 
-                Thread.sleep(2000)
-                return true
+                    connect.createUser(token, id)
+                }, {Log.i("Falha Login",resquestBody.toString())})
+
+                return resultHttp
+
             } catch (e: InterruptedException) {
 
                 return false
             }
 
-            return  true
+            return  false
         }
 
         override fun onPostExecute(success: Boolean?) {
@@ -242,8 +270,14 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
             if (success!!) {
                 enterSystem()
             } else {
+                alert("Falha ao acessar a Plataforma") {
+                        title = "Atenção"
+                        yesButton { toast("Yess!!!") }
+                        noButton { }
+                }.show()
+                login.error = "Verifique seu código de cliente"
+                login.requestFocus()
                 password.error = getString(R.string.error_incorrect_password)
-                password.requestFocus()
             }
         }
 
@@ -251,14 +285,5 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
             mAuthTask = null
             showProgress(false)
         }
-    }
-
-    companion object {
-
-        /**
-         * A dummy authentication store containing known user names and passwords.
-         * TODO: remove after connecting to a real authentication system.
-         */
-        private val DUMMY_CREDENTIALS = arrayOf("foo@example.com:hello", "bar@example.com:world")
     }
 }
