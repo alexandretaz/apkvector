@@ -27,6 +27,7 @@ import android.Manifest.permission.READ_PHONE_STATE
 import kotlinx.android.synthetic.main.activity_login.*
 import android.content.Context.TELEPHONY_SERVICE
 import android.content.Intent
+import android.support.v4.app.ActivityCompat
 import android.telephony.TelephonyManager
 import android.util.Log
 import com.beust.klaxon.Klaxon
@@ -50,18 +51,22 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.i("Criando Login","Passo 1 da Atividade")
-        val connect = SqliteHelper.getInstance(applicationContext)
-        Log.i("Criando SQLitw","Passo 2 da Atividade")
-        connect.createDBIfNeeded()
-        Log.i("Criando Db","Passo 3 da Atividade")
+        val permissions = arrayOf(
+                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                android.Manifest.permission.INTERNET,
+                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                android.Manifest.permission.ACCESS_NETWORK_STATE,
+                android.Manifest.permission.CALL_PHONE,
+                android.Manifest.permission.LOCATION_HARDWARE,
+                android.Manifest.permission.READ_PHONE_STATE
+        )
+            ActivityCompat.requestPermissions(this, permissions,0)
 
-        Log.i("Pegando os usuários","Passo 1 da Atividade")
+        val connect = SqliteHelper.getInstance(applicationContext)
         val hasUser:Int = connect.getAllUsers()
         if(hasUser==1) {
             enterSystem()
         }
-        Log.i("Pegando os usuários","Passo 1 da Atividade")
         setContentView(R.layout.activity_login)
         // Set up the login form.
         password.setOnEditorActionListener(TextView.OnEditorActionListener { _, id, _ ->

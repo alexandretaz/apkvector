@@ -17,4 +17,6 @@
     <string name="title_notifications">Notifications</string>
     <string name="title_activity_help">Ajuda</string>
     <string name="action_settings">Configurações</string>
+    <!-- Strings related to the map -->
+    <string name="GmapsApiKey">AIzaSyDq_5kbhRaswbogaJOLeM3VDCocPuRaDq0</string>
 </resources>

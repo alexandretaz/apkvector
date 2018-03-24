@@ -6,6 +6,10 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import org.jetbrains.anko.db.*
+import java.sql.Date
+import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.util.Calendar
 
 /**
  * Created by alexandre.andrade on 22/03/18.
@@ -25,25 +29,26 @@ class SqliteHelper(ctx: Context): ManagedSQLiteOpenHelper(ctx, "vector_alarm"){
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        this.createDBIfNeeded(db)
+        val connection = db
     }
 
-     fun createDBIfNeeded(){
-        writableDatabase.createTable("user_access",true,"id" to INTEGER+ PRIMARY_KEY + UNIQUE,
+     fun createDBIfNeeded(db:SQLiteDatabase?){
+        db?.createTable("user_access",true,"id" to INTEGER+ PRIMARY_KEY + UNIQUE,
                 "token" to TEXT,
                 "device_id" to TEXT
                 )
-        writableDatabase.createTable("open_alarms",true,"id" to INTEGER+ PRIMARY_KEY+ UNIQUE,
+        db?.createTable("open_alarms",true,"id" to INTEGER+ PRIMARY_KEY+ UNIQUE,
             "last_update" to TEXT
         )
-        writableDatabase.createTable("open_helps",true,"id" to INTEGER+ PRIMARY_KEY+ UNIQUE,
+        db?.createTable("open_helps",true,"id" to INTEGER+ PRIMARY_KEY+ UNIQUE,
                 "last_update" to TEXT
         )
-        writableDatabase.createTable("lost_points_alarms",true,"id" to INTEGER+ PRIMARY_KEY+ UNIQUE,
+        db?.createTable("lost_points_alarms",true,"id" to INTEGER+ PRIMARY_KEY+ UNIQUE,
                 "latitude" to TEXT,
                 "longitue" to TEXT
         )
-        writableDatabase.createTable("lost_points_help",true,"id" to INTEGER+ PRIMARY_KEY+ UNIQUE,
+        db?.createTable("lost_points_help",true,"id" to INTEGER+ PRIMARY_KEY+ UNIQUE,
                 "latitude" to TEXT,
                 "longitue" to TEXT
                 )
@@ -59,6 +64,17 @@ class SqliteHelper(ctx: Context): ManagedSQLiteOpenHelper(ctx, "vector_alarm"){
 
     }
 
+    fun registerAlarm( id:Int):Long {
+        val value = ContentValues()
+        val lastUpdateDate = Calendar.getInstance()
+        val format = SimpleDateFormat("Y-m-d H:i:s")
+        val lastUpdate = format.format(lastUpdateDate)
+        value.put("id",id)
+        value.put("last_update",lastUpdate)
+        return writableDatabase.insert("open_alarms",null, value)
+
+    }
+
     fun getAllUsers(): Int {
         val stuList: MutableList<AppClient> = mutableListOf<AppClient>()
         val cursor: Cursor = readableDatabase.query("user_access", arrayOf("id", "token", "device_id"), null, null, null, null, null)
@@ -69,7 +85,7 @@ class SqliteHelper(ctx: Context): ManagedSQLiteOpenHelper(ctx, "vector_alarm"){
         return numberOfUsers
     }
 
-    fun getUser(db: SQLiteDatabase?):AppClient {
+    fun getUser():AppClient {
 
         val cursor: Cursor = readableDatabase.query("user_access", arrayOf("id", "token", "device_id"), null, null, null, null, null)
         try {
@@ -85,7 +101,7 @@ class SqliteHelper(ctx: Context): ManagedSQLiteOpenHelper(ctx, "vector_alarm"){
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        db?.dropTable("user_access")
     }
 
 
