@@ -66,8 +66,8 @@ class SqliteHelper(ctx: Context): ManagedSQLiteOpenHelper(ctx, "vector_alarm"){
 
     fun registerAlarm( id:Int):Long {
         val value = ContentValues()
-        val lastUpdateDate = Calendar.getInstance()
-        val format = SimpleDateFormat("Y-m-d H:i:s")
+        val lastUpdateDate = Calendar.getInstance().time;
+        val format = SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
         val lastUpdate = format.format(lastUpdateDate)
         value.put("id",id)
         value.put("last_update",lastUpdate)

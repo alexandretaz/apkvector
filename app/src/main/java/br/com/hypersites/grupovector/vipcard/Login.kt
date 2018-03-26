@@ -252,7 +252,8 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
                 result.fold({
                     Log.i("Teste Login", result.toString())
                     resultHttp = true
-                    val token = result.toString()
+                    val token = result.toString().removePrefix("[Success: ").removeSuffix("]")
+                    Log.i ("Device Token", token)
                     val connect = SqliteHelper.getInstance(applicationContext)
 
                     connect.createUser(token, id)
