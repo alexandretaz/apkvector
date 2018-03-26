@@ -12,7 +12,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 
 class HelpActivity : AppCompatActivity(){
 
-    private lateinit var mMap: GoogleMap
+    //private lateinit var mMap: GoogleMap
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
