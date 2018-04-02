@@ -278,7 +278,7 @@ class Login : AppCompatActivity(), LoaderCallbacks<Cursor> {
             } else {
                 alert("Falha ao acessar a Plataforma") {
                         title = "Atenção"
-                        yesButton { toast("Yess!!!") }
+                        yesButton { toast("Cheque seus dados") }
                         noButton { }
                 }.show()
                 login.error = "Verifique seu código de cliente"
