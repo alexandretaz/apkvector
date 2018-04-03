@@ -20,6 +20,10 @@ import android.util.Log
 import android.widget.Toast
 import com.github.kittinunf.fuel.Fuel
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.alert
+import org.jetbrains.anko.noButton
+import org.jetbrains.anko.toast
+import org.jetbrains.anko.yesButton
 import org.json.JSONObject
 
 
@@ -54,22 +58,18 @@ class MainActivity : AppCompatActivity() , LocationListener{
                 val __connection = SqliteHelper.getInstance(applicationContext)
                 val client = __connection.getUser()
                 createAlarmOnServer(client.token,client.device_id, this.latitude, this.longitude)
-                startAlarm(__connection,client)
+
 
             }
         }, 10000)
 
+
     }
 
 
-     fun startAlarm(_connection:SqliteHelper, client:AppClient) {
-        val _alarm:Alarm = Alarm()
-        _alarm.setConnection(_connection)
-
-        _alarm.setPosition(this.latitude,this.longitude)
-        _alarm.setClient(client)
-        //_alarm.setLManager(this.locaManager!!)
-        this.alarm = _alarm
+     fun startAlarm() {
+         intent = Intent(this, Alarm::class.java)
+         startService(intent)
     }
 
 
@@ -93,7 +93,6 @@ class MainActivity : AppCompatActivity() , LocationListener{
                     this.alarm?.setLManager(locationManager)
                     val _connection = SqliteHelper.getInstance(applicationContext)
                     val client = _connection.getUser()
-
                 }
 
             }else{
@@ -149,8 +148,6 @@ class MainActivity : AppCompatActivity() , LocationListener{
             val client = __connection.getUser()
             createAlarmTask = alarmCreationTask(token, device_id, latitude, longitude, __connection )
             createAlarmTask!!.execute(null as Void?)
-
-            startAlarm(__connection,client)
             return true
         }
         return cancel
@@ -169,8 +166,6 @@ class MainActivity : AppCompatActivity() , LocationListener{
                     this.status = 0
                 }
                 else{
-                    intent = Intent(this, Alarm::class.java)
-                    startService(intent)
                     this.status=1;
                     callAlarmServer()
                 }
@@ -213,12 +208,35 @@ class MainActivity : AppCompatActivity() , LocationListener{
 
                 return true
 
+
             } catch (e: InterruptedException) {
 
                 return false
             }
 
             return  false
+        }
+
+        override fun onPostExecute(success: Boolean?) {
+            createAlarmTask = null
+
+            if (success!!) {
+                val __connection = SqliteHelper.getInstance(applicationContext)
+                val client = __connection.getUser()
+
+                startAlarm()
+
+            } else {
+                alert("Não foi possível contatar a plataforma") {
+                    title = "Atenção"
+                    yesButton { toast("Seus pontos não estão sendo atualizados") }
+                    noButton { }
+                }.show()
+            }
+        }
+
+        override fun onCancelled() {
+            createAlarmTask = null
         }
 
     }

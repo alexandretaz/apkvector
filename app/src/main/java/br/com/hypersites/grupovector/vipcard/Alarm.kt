@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Criteria
 import android.location.Location
-import AlarmPoint
 import android.annotation.SuppressLint
 
 
@@ -15,11 +14,8 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.*
 import android.provider.Settings
-import android.support.v4.app.ActivityCompat
-import android.support.v4.app.ActivityCompat.requestPermissions
 import android.support.v4.content.ContextCompat
 import android.util.Log
-import android.widget.Toast
 import com.github.kittinunf.fuel.Fuel
 import org.json.JSONObject
 
@@ -34,7 +30,7 @@ class Alarm: Service() {
     var status = 1
     var longitude:Double = 0.00
     var __connection:SqliteHelper?=null
-    private var createAlarmTask: alarmPoint? = null
+    private var  updateAlarmTask: alarmPoint? = null
 
     override fun onBind(intent: Intent): IBinder? {
         // Used only in case of bound services.
@@ -48,14 +44,32 @@ class Alarm: Service() {
         val criteria = Criteria()
         this.locationManager =getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val provider = locationManager?.getBestProvider(criteria, false)
-        locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0.00f, locationListener)
+        locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 30000, 0.00f, locationListener)
+        this.__connection = SqliteHelper.getInstance(applicationContext)
+        val client = this.__connection!!.getUser()
+        this.token =client.token
+        this.imei = client.device_id
         Log.i("Serviço Alarme:", "Entrou")
 
     }
+    fun postPosition(latitude: Double, longitude: Double):Boolean
+    {
+        token = this.token
+        imei = this.imei
+         updateAlarmTask = alarmPoint(token, imei, latitude, longitude, this.__connection)
+        updateAlarmTask!!.execute(null as Void?)
+        return true
+    }
+
+
 
     private val locationListener:LocationListener = object :LocationListener{
         override fun onLocationChanged(location: Location?) {
             setPosition(location!!.latitude,location!!.longitude)
+            Log.i("Atualização de Posição",""+location!!.latitude.toString()+","+location!!.longitude.toString())
+            val latitude=latitude
+            val longitude = longitude
+                postPosition(latitude,longitude)
         }
 
         override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
@@ -100,7 +114,7 @@ class Alarm: Service() {
     fun send(token:String, imei:String):Int{
         Handler().postDelayed({
             Log.i("Criar Alarme:","Entrou")
-            pointAlarmOnServer(token,imei,this.latitude,this.longitude)
+            alarmPoint(token,imei,this.latitude,this.longitude,this.__connection)
         }, 30000)
         return 1
     }
@@ -127,38 +141,11 @@ class Alarm: Service() {
     }
 
 
-    fun pointAlarmOnServer(token:String, device_id:String,latitude: Double, longitude: Double):Boolean
-    {
-        Log.i("Mandando Posição", "Chamou metodo")
-
-        if (createAlarmTask!= null) {
-            return false
-        }
-
-        var cancel = false
-
-
-
-        if (cancel) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
-        } else {
-
-
-            createAlarmTask = alarmPoint(token, device_id, latitude, longitude, __connection)
-            createAlarmTask!!.execute(null as Void?)
-            if(this.status!=0){
-
-            }
-            return true
-        }
-        return cancel
-    }
 
     fun destroy() {
         super.onDestroy()
         this.status=0
-        createAlarmTask!!.cancel(true)
+        updateAlarmTask!!.cancel(true)
         Log.i("Alarm Finalizado:", " finalizado")
     }
 
@@ -182,17 +169,17 @@ class Alarm: Service() {
                     json.put("longitude", longitude.toString() )
                     json.put("imei",imei)
                     Log.i("Request", json.toString())
-                val (request, resquestBody, result) = Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/alarm")
+                val (request, resquestBody, result) = Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/add/alarm/point")
                     .body(json.toString())
                         .responseString()
                 result.fold({
                     resultHttp = true
                     val jsonText  = result.toString().removePrefix("[Success: ").removeSuffix("]")
 
-                    val alarmJson = JSONObject(jsonText)
-                    __connection!!.registerAlarm(alarmJson.getInt("id"))
-
-                }, {Log.i("Ao criar alarm",resquestBody.toString())})
+                    //val alarmJson = JSONObject(jsonText)
+                  //  __connection!!.registerAlarm(alarmJson.getInt("id"))
+                    Log.i("Sucesso ao atualizar al",result.toString())
+                }, {Log.i("Falha ao atualizar al",resquestBody.toString())})
 
                 return resultHttp
 
