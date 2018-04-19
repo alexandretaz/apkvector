@@ -2,6 +2,7 @@ package br.com.hypersites.grupovector.vipcard
 
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,21 +10,24 @@ import android.location.Criteria
 import android.location.Location
 import android.location.LocationManager
 import android.location.LocationListener
+import android.net.Uri
 import android.os.AsyncTask
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.provider.Settings
 import android.support.design.widget.BottomNavigationView
 import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
+import android.support.v7.widget.RecyclerView
 import android.util.Log
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import com.github.kittinunf.fuel.Fuel
 import kotlinx.android.synthetic.main.activity_main.*
-import org.jetbrains.anko.alert
-import org.jetbrains.anko.noButton
-import org.jetbrains.anko.toast
-import org.jetbrains.anko.yesButton
+import org.jetbrains.anko.*
 import org.json.JSONObject
 
 
@@ -32,6 +36,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
     private val TAG = "teste location"
     val REQUEST_LOCATION = 2
     var alarm :Alarm? = null
+    var action:String = "alarm"
     var locaManager : LocationManager? = null
     private var createAlarmTask: alarmCreationTask? = null
 
@@ -40,15 +45,63 @@ class MainActivity : AppCompatActivity() , LocationListener{
     var longitude:Double = 0.00
     var status = 0
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val btn_call = findViewById<TextView>(R.id.callButton) as Button
+        btn_call.setOnClickListener {
+            runtime_permissions()
+            intent = Intent(this, Alarm::class.java)
+            stopService(intent)
+            this.status = 0
+             intent = Intent(Intent.ACTION_CALL, Uri.parse("tel:" + "+551136489340"))
+            startActivity(intent)
+        }
+        val btn_help = findViewById<TextView>(R.id.helpCaller) as Button
+        btn_help.setOnClickListener {
+            runtime_permissions()
+            intent = Intent(this, Alarm::class.java)
+            stopService(intent)
+            this.action = "help"
+            if(this.status==0) {
+                this.status=1
+            }
+            intent = Intent(this, Help::class.java)
+            startService(intent)
+        }
         setLocation()
         callAlarmServer()
         this.status=1
 
 
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+    }
+    private fun runtime_permissions():Boolean {
+        var location:Int = 0
+        var phone:Int = 0
+        var total:Int = 0
+        if(Build.VERSION.SDK_INT>=23 &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+                    , 100)
+            location = 1
+        }
+
+        if(Build.VERSION.SDK_INT>=23 &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
+                != PackageManager.PERMISSION_GRANTED ) {
+            ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.CALL_PHONE)
+                    , 100)
+            phone = 1
+        }
+        total = (location+phone)
+        if(total==2) {
+            return true
+        }
+        return false
     }
 
     fun callAlarmServer() {
@@ -57,7 +110,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
             if(this.status!=0){
                 val __connection = SqliteHelper.getInstance(applicationContext)
                 val client = __connection.getUser()
-                createAlarmOnServer(client.token,client.device_id, this.latitude, this.longitude)
+                createAlarmOnServer(client.token,client.device_id, this.latitude, this.longitude,this.action)
 
 
             }
@@ -126,8 +179,9 @@ class MainActivity : AppCompatActivity() , LocationListener{
            setLocation()
        }
     }
-    fun createAlarmOnServer(token:String, device_id:String,latitude: Double, longitude: Double):Boolean
+    fun createAlarmOnServer(token:String, device_id:String,latitude: Double, longitude: Double, action: String):Boolean
     {
+
 
 
         if (createAlarmTask!= null) {
@@ -146,7 +200,8 @@ class MainActivity : AppCompatActivity() , LocationListener{
 
             val __connection = SqliteHelper.getInstance(applicationContext)
             val client = __connection.getUser()
-            createAlarmTask = alarmCreationTask(token, device_id, latitude, longitude, __connection )
+            createAlarmTask = alarmCreationTask(token, device_id, latitude, longitude, __connection, action )
+            createAlarmTask!!.setAlarm(this.action)
             createAlarmTask!!.execute(null as Void?)
             return true
         }
@@ -172,6 +227,9 @@ class MainActivity : AppCompatActivity() , LocationListener{
 
             }
             R.id.navigation_dashboard -> {
+                intent = Intent(this, Alarm::class.java)
+                stopService(intent)
+                this.status = 0
                intent = Intent(this, HelpActivity::class.java)
                 startActivity(intent)
             }
@@ -179,10 +237,14 @@ class MainActivity : AppCompatActivity() , LocationListener{
         false
     }
 
-    inner class alarmCreationTask internal constructor(private val token: String, private val imei: String, private val latitude: Double, private val longitude:Double,val __connection: SqliteHelper?) : AsyncTask<Void, Void, Boolean>() {
+    inner class alarmCreationTask internal constructor(private val token: String, private val imei: String, private val latitude: Double, private val longitude:Double,val __connection: SqliteHelper?, action: String?) : AsyncTask<Void, Void, Boolean>() {
 
 
+        var actionString : String = "alarm"
 
+        fun setAlarm(action:String){
+            this.actionString = action
+        }
         override fun doInBackground(vararg params: Void?): Boolean {
             val token = token
             var imei = imei
@@ -195,7 +257,7 @@ class MainActivity : AppCompatActivity() , LocationListener{
                 json.put("longitude", longitude.toString() )
                 json.put("imei",imei)
                 Log.i("Request", json.toString())
-                val (request, resquestBody, result) = Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/alarm")
+                val (request, resquestBody, result) = Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/"+this.actionString)
                         .body(json.toString())
                         .responseString()
                 result.fold({
@@ -225,6 +287,12 @@ class MainActivity : AppCompatActivity() , LocationListener{
                 val client = __connection.getUser()
 
                 startAlarm()
+                if(this.actionString!="alarm") {
+                    alert("Pedido de ajuda enviado") {
+                        title = "Atenção"
+                        yesButton { toast("Ok") }
+                    }.show()
+                }
 
             } else {
                 alert("Não foi possível contatar a plataforma") {

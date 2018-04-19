@@ -12,9 +12,17 @@ import android.content.Intent
 import android.net.Uri
 import android.support.v7.widget.RecyclerView
 import android.widget.Button
+import android.widget.EditText
+import com.github.nkzawa.engineio.client.Socket
+import com.github.nkzawa.socketio.client.IO
 import kotlinx.android.synthetic.main.activity_help.*
+import org.jetbrains.anko.longToast
+import org.w3c.dom.Text
 
 class HelpActivity : AppCompatActivity(){
+
+
+
 
     //private lateinit var mMap: GoogleMap
 
@@ -22,13 +30,18 @@ class HelpActivity : AppCompatActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_help)
-       val btn_call = findViewById<RecyclerView>(R.id.callButton) as Button
+       val btn_call = findViewById<RecyclerView>(R.id.button_chatbox_send) as Button
+        val messageChat = findViewById<RecyclerView>(R.id.edittext_chatbox) as EditText
         btn_call.setOnClickListener {
             runtime_permissions()
-            val intent = Intent(Intent.ACTION_CALL, Uri.parse("tel:" + "+551136489340"))
-            startActivity(intent)
+            longToast("O servidor de chat não está no ar, por favor entre em contato por telefone!")
+
+
         }
     }
+
+
+
 
     private fun runtime_permissions():Boolean {
         var location:Int = 0

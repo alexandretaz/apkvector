@@ -20,7 +20,7 @@ import com.github.kittinunf.fuel.Fuel
 import org.json.JSONObject
 
 
-class Alarm: Service() {
+class Alarm(action:String="alarm"): Service() {
 
     var locationManager:LocationManager? =null
     var latitude:Double = 0.00
@@ -30,6 +30,7 @@ class Alarm: Service() {
     var status = 1
     var longitude:Double = 0.00
     var __connection:SqliteHelper?=null
+    var actionString = action
     private var  updateAlarmTask: alarmPoint? = null
 
     override fun onBind(intent: Intent): IBinder? {
@@ -47,6 +48,7 @@ class Alarm: Service() {
         locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER, 30000, 0.00f, locationListener)
         this.__connection = SqliteHelper.getInstance(applicationContext)
         val client = this.__connection!!.getUser()
+        this.actionString
         this.token =client.token
         this.imei = client.device_id
         Log.i("Serviço Alarme:", "Entrou")
@@ -56,7 +58,7 @@ class Alarm: Service() {
     {
         token = this.token
         imei = this.imei
-         updateAlarmTask = alarmPoint(token, imei, latitude, longitude, this.__connection)
+         updateAlarmTask = alarmPoint(token, imei, latitude, longitude, this.__connection, this.actionString)
         updateAlarmTask!!.execute(null as Void?)
         return true
     }
@@ -114,7 +116,7 @@ class Alarm: Service() {
     fun send(token:String, imei:String):Int{
         Handler().postDelayed({
             Log.i("Criar Alarme:","Entrou")
-            alarmPoint(token,imei,this.latitude,this.longitude,this.__connection)
+            alarmPoint(token,imei,this.latitude,this.longitude,this.__connection, this.actionString)
         }, 30000)
         return 1
     }
@@ -152,7 +154,7 @@ class Alarm: Service() {
 
 
 
-    inner class alarmPoint internal constructor(private val token: String, private val imei: String, private val latitude: Double, private val longitude:Double,val __connection: SqliteHelper?) : AsyncTask<Void, Void, Boolean>() {
+    inner class alarmPoint internal constructor(private val token: String, private val imei: String, private val latitude: Double, private val longitude:Double,val __connection: SqliteHelper?,val _type:String?) : AsyncTask<Void, Void, Boolean>() {
 
 
 
@@ -161,6 +163,11 @@ class Alarm: Service() {
                 var imei = imei
                 val latitude=latitude
                 val longitude = longitude
+                var typeAlarm="alarm"
+                if(_type == "help") {
+                    typeAlarm="help"
+                }
+            val strUri = "https://vipcard.grupovector.com.br:3278/api/V1/add/"+typeAlarm+"/point"
                 try {
                     val json = JSONObject()
                     var resultHttp = false
@@ -169,7 +176,7 @@ class Alarm: Service() {
                     json.put("longitude", longitude.toString() )
                     json.put("imei",imei)
                     Log.i("Request", json.toString())
-                val (request, resquestBody, result) = Fuel.post("https://vipcard.grupovector.com.br:3278/api/V1/add/alarm/point")
+                val (request, resquestBody, result) = Fuel.post(strUri)
                     .body(json.toString())
                         .responseString()
                 result.fold({
