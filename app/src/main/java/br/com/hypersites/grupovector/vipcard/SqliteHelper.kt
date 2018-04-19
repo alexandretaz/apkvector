@@ -60,7 +60,15 @@ class SqliteHelper(ctx: Context): ManagedSQLiteOpenHelper(ctx, "vector_alarm"){
         value.put("id",1)
         value.put("token",token)
         value.put("device_id", device_id)
-        return writableDatabase.insert("user_access",null, value)
+        if(this.getAllUsers()<1) {
+            return writableDatabase.insert("user_access", null, value)
+        }
+        else{
+            value.put("token",token)
+            value.put("device_id", device_id)
+            writableDatabase.delete("user_access", "id=1")
+            return writableDatabase.insert("user_access", null, value)
+        }
 
     }
 
